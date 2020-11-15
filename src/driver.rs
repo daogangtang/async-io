@@ -6,7 +6,8 @@ use std::task::{Context, Poll};
 use std::thread;
 use std::time::{Duration, Instant};
 
-use futures_lite::pin;
+//use futures_lite::pin;
+use futures::pin_mut;
 use once_cell::sync::Lazy;
 use waker_fn::waker_fn;
 
@@ -135,7 +136,7 @@ pub fn block_on<T>(future: impl Future<Output = T>) -> T {
         }
     });
     let cx = &mut Context::from_waker(&waker);
-    pin!(future);
+    pin_mut!(future);
 
     loop {
         // Poll the future.

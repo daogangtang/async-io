@@ -12,7 +12,8 @@ use std::task::{Poll, Waker};
 use std::time::{Duration, Instant};
 
 use concurrent_queue::ConcurrentQueue;
-use futures_lite::future;
+//use futures_lite::future;
+use futures::future;
 use once_cell::sync::Lazy;
 use polling::{Event, Poller};
 use vec_arena::Arena;

@@ -74,9 +74,12 @@ use std::{
 #[cfg(windows)]
 use std::os::windows::io::{AsRawSocket, RawSocket};
 
-use futures_lite::io::{AsyncRead, AsyncWrite};
-use futures_lite::stream::{self, Stream};
-use futures_lite::{future, pin};
+//use futures_lite::io::{AsyncRead, AsyncWrite};
+//use futures_lite::stream::{self, Stream};
+//use futures_lite::{future, pin};
+use futures::io::{AsyncRead, AsyncWrite};
+use futures::stream::{self, Stream};
+use futures::{future, pin_mut};
 
 use crate::reactor::{Reactor, Source};
 
@@ -265,6 +268,7 @@ impl Future for Timer {
         }
     }
 }
+
 
 /// Async adapter for I/O types.
 ///
@@ -1498,7 +1502,7 @@ impl TryFrom<std::os::unix::net::UnixDatagram> for Async<std::os::unix::net::Uni
 /// Polls a future once, waits for a wakeup, and then optimistically assumes the future is ready.
 async fn optimistic(fut: impl Future<Output = io::Result<()>>) -> io::Result<()> {
     let mut polled = false;
-    pin!(fut);
+    pin_mut!(fut);
 
     future::poll_fn(|cx| {
         if !polled {
