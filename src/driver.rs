@@ -6,7 +6,6 @@ use std::task::{Context, Poll};
 use std::thread;
 use std::time::{Duration, Instant};
 
-//use futures_lite::pin;
 use futures::pin_mut;
 use once_cell::sync::Lazy;
 use waker_fn::waker_fn;
@@ -92,10 +91,10 @@ fn main_loop(parker: parking::Parker) {
 /// # Examples
 ///
 /// ```
-/// use async_io::Timer;
+/// use superpoll_io::Timer;
 /// use std::time::Duration;
 ///
-/// async_io::block_on(async {
+/// futures::executor::block_on(async {
 ///     // This timer will likely be processed by the current
 ///     // thread rather than the fallback "async-io" thread.
 ///     Timer::after(Duration::from_millis(1)).await;

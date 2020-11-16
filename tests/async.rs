@@ -7,8 +7,8 @@ use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 
-use async_io::{Async, Timer};
-use futures_lite::{future, prelude::*};
+use superpoll_io::{Async, Timer};
+use futures::{future, executor, prelude::*};
 #[cfg(unix)]
 use tempfile::tempdir;
 
@@ -22,20 +22,20 @@ Aliquam consequat urna vitae ipsum pulvinar, in blandit purus eleifend.
 fn spawn<T: Send + 'static>(
     f: impl Future<Output = T> + Send + 'static,
 ) -> impl Future<Output = T> + Send + 'static {
-    let (s, r) = async_channel::bounded(1);
+    let (mut s, mut r) = futures::channel::mpsc::channel(1);
 
     thread::spawn(move || {
-        future::block_on(async {
+        executor::block_on(async {
             s.send(f.await).await.ok();
         })
     });
 
-    Box::pin(async move { r.recv().await.unwrap() })
+    Box::pin(async move { r.next().await.unwrap() })
 }
 
 #[test]
 fn tcp_connect() -> io::Result<()> {
-    future::block_on(async {
+    executor::block_on(async {
         let listener = Async::<TcpListener>::bind(([127, 0, 0, 1], 0))?;
         let addr = listener.get_ref().local_addr()?;
         let task = spawn(async move { listener.accept().await });
@@ -62,7 +62,7 @@ fn tcp_connect() -> io::Result<()> {
 
 #[test]
 fn tcp_peek_read() -> io::Result<()> {
-    future::block_on(async {
+    executor::block_on(async {
         let listener = Async::<TcpListener>::bind(([127, 0, 0, 1], 0))?;
         let addr = listener.get_ref().local_addr()?;
 
@@ -84,7 +84,7 @@ fn tcp_peek_read() -> io::Result<()> {
 
 #[test]
 fn tcp_reader_hangup() -> io::Result<()> {
-    future::block_on(async {
+    executor::block_on(async {
         let listener = Async::<TcpListener>::bind(([127, 0, 0, 1], 0))?;
         let addr = listener.get_ref().local_addr()?;
         let task = spawn(async move { listener.accept().await });
@@ -106,7 +106,7 @@ fn tcp_reader_hangup() -> io::Result<()> {
 
 #[test]
 fn tcp_writer_hangup() -> io::Result<()> {
-    future::block_on(async {
+    executor::block_on(async {
         let listener = Async::<TcpListener>::bind(([127, 0, 0, 1], 0))?;
         let addr = listener.get_ref().local_addr()?;
         let task = spawn(async move { listener.accept().await });
@@ -130,7 +130,7 @@ fn tcp_writer_hangup() -> io::Result<()> {
 
 #[test]
 fn udp_send_recv() -> io::Result<()> {
-    future::block_on(async {
+    executor::block_on(async {
         let socket1 = Async::<UdpSocket>::bind(([127, 0, 0, 1], 0))?;
         let socket2 = Async::<UdpSocket>::bind(([127, 0, 0, 1], 0))?;
         socket1.get_ref().connect(socket2.get_ref().local_addr()?)?;
@@ -158,7 +158,7 @@ fn udp_send_recv() -> io::Result<()> {
 #[cfg(unix)]
 #[test]
 fn udp_connect() -> io::Result<()> {
-    future::block_on(async {
+    executor::block_on(async {
         let dir = tempdir()?;
         let path = dir.path().join("socket");
 
@@ -181,7 +181,7 @@ fn udp_connect() -> io::Result<()> {
 #[cfg(unix)]
 #[test]
 fn uds_connect() -> io::Result<()> {
-    future::block_on(async {
+    executor::block_on(async {
         let dir = tempdir()?;
         let path = dir.path().join("socket");
         let listener = Async::<UnixListener>::bind(&path)?;
@@ -214,7 +214,7 @@ fn uds_connect() -> io::Result<()> {
 #[cfg(unix)]
 #[test]
 fn uds_send_recv() -> io::Result<()> {
-    future::block_on(async {
+    executor::block_on(async {
         let (socket1, socket2) = Async::<UnixDatagram>::pair()?;
 
         socket1.send(LOREM_IPSUM).await?;
@@ -229,7 +229,7 @@ fn uds_send_recv() -> io::Result<()> {
 #[cfg(unix)]
 #[test]
 fn uds_send_to_recv_from() -> io::Result<()> {
-    future::block_on(async {
+    executor::block_on(async {
         let dir = tempdir()?;
         let path = dir.path().join("socket");
         let socket1 = Async::<UnixDatagram>::bind(&path)?;
@@ -247,7 +247,7 @@ fn uds_send_to_recv_from() -> io::Result<()> {
 #[cfg(unix)]
 #[test]
 fn uds_reader_hangup() -> io::Result<()> {
-    future::block_on(async {
+    executor::block_on(async {
         let (socket1, mut socket2) = Async::<UnixStream>::pair()?;
 
         let task = spawn(async move {
@@ -265,7 +265,7 @@ fn uds_reader_hangup() -> io::Result<()> {
 #[cfg(unix)]
 #[test]
 fn uds_writer_hangup() -> io::Result<()> {
-    future::block_on(async {
+    executor::block_on(async {
         let (socket1, mut socket2) = Async::<UnixStream>::pair()?;
 
         let task = spawn(async move {
@@ -287,7 +287,7 @@ fn uds_writer_hangup() -> io::Result<()> {
 // those (we need to re-register interest on the other).
 #[test]
 fn tcp_duplex() -> io::Result<()> {
-    future::block_on(async {
+    executor::block_on(async {
         let listener = Async::<TcpListener>::bind(([127, 0, 0, 1], 0))?;
         let stream1 =
             Arc::new(Async::<TcpStream>::connect(listener.get_ref().local_addr()?).await?);
@@ -339,15 +339,15 @@ fn tcp_duplex() -> io::Result<()> {
 
 #[test]
 fn shutdown() -> io::Result<()> {
-    future::block_on(async {
+    executor::block_on(async {
         let listener = Async::<TcpListener>::bind(([127, 0, 0, 1], 0))?;
         let addr = listener.get_ref().local_addr()?;
         let ((mut reader, _), writer) =
-            future::try_zip(listener.accept(), Async::<TcpStream>::connect(addr)).await?;
+            future::try_join(listener.accept(), Async::<TcpStream>::connect(addr)).await?;
 
         // The writer must be closed in order for `read_to_end()` to finish.
         let mut buf = Vec::new();
-        future::try_zip(reader.read_to_end(&mut buf), async {
+        future::try_join(reader.read_to_end(&mut buf), async {
             writer.get_ref().shutdown(Shutdown::Write)
         })
         .await?;

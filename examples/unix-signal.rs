@@ -10,10 +10,10 @@
 fn main() -> std::io::Result<()> {
     use std::os::unix::net::UnixStream;
 
-    use async_io::Async;
-    use futures_lite::{future, prelude::*};
+    use superpoll_io::Async;
+    use futures::{executor, prelude::*};
 
-    future::block_on(async {
+    executor::block_on(async {
         // Create a Unix stream that receives a byte on each signal occurrence.
         let (a, mut b) = Async::<UnixStream>::pair()?;
         signal_hook::pipe::register(signal_hook::SIGINT, a)?;

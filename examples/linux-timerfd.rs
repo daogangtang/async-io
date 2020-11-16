@@ -12,8 +12,8 @@ fn main() -> std::io::Result<()> {
     use std::os::unix::io::AsRawFd;
     use std::time::{Duration, Instant};
 
-    use async_io::Async;
-    use futures_lite::future;
+    use superpoll_io::Async;
+    use futures::executor;
     use timerfd::{SetTimeFlags, TimerFd, TimerState};
 
     /// Converts a [`nix::Error`] into [`std::io::Error`].
@@ -37,7 +37,7 @@ fn main() -> std::io::Result<()> {
         Ok(())
     }
 
-    future::block_on(async {
+    executor::block_on(async {
         let start = Instant::now();
         println!("Sleeping...");
 

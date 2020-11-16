@@ -10,9 +10,9 @@
 fn main() -> std::io::Result<()> {
     use std::path::PathBuf;
 
-    use async_io::Async;
-    use blocking::Unblock;
-    use futures_lite::{future, io, prelude::*};
+    use superpoll_io::Async;
+    use superpoll_blocking::Unblock;
+    use futures::{future, io, prelude::*, executor};
     use tempfile::tempdir;
     use uds_windows::{UnixListener, UnixStream};
 
@@ -30,12 +30,12 @@ fn main() -> std::io::Result<()> {
     let dir = tempdir()?;
     let path = dir.path().join("socket");
 
-    future::block_on(async {
+    executor::block_on(async {
         // Create a listener.
         let listener = Async::new(UnixListener::bind(&path)?)?;
         println!("Listening on {:?}", listener.get_ref().local_addr()?);
 
-        future::try_zip(
+        future::try_join(
             async {
                 // Accept the client.
                 let (stream, _) = listener.read_with(|l| l.accept()).await?;
