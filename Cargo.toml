@@ -5,9 +5,9 @@ authors = ["Stjepan Glavina <stjepang@gmail.com>", "Daogang Tang <daogangtang@gm
 edition = "2018"
 description = "Async I/O and timers"
 license = "Apache-2.0 OR MIT"
-repository = "https://github.com/stjepang/async-io"
-homepage = "https://github.com/stjepang/async-io"
-documentation = "https://docs.rs/async-io"
+repository = "https://github.com/daogangtang/superpoll-io"
+homepage = "https://github.com/daogangtang/superpoll-io"
+documentation = ""
 keywords = ["mio", "epoll", "kqueue", "iocp", "wepoll"]
 categories = ["asynchronous", "network-programming", "os"]
 readme = "README.md"
@@ -31,8 +31,8 @@ libc = "0.2.77"
 winapi = { version = "0.3.9", features = ["winsock2"] }
 
 [dev-dependencies]
-superpoll-net = {path = "../superpoll-net"}
-superpoll-blocking = {path = "../superpoll-blocking"}
+superpoll-net = {git = "https://github.com/daogangtang/superpoll-net"}
+superpoll-blocking = {git = "https://github.com/daogangtang/superpoll-blocking"}
 signal-hook = "0.1.16"
 tempfile = "3.1.0"
 
